@@ -6,7 +6,7 @@ end
 
 M.create_post = function ()
     -- Get title from user
-    local title = vim.fn.input("Post title: ")
+    local title = vim.fn.input("Title: ")
     if title == "" then return end
     -- Format date and filename
     local date = os.date("%Y-%m-%d")
@@ -40,5 +40,9 @@ tags:
     else
         vim.notify("Failed to create post", vim.log.levels.ERROR)
     end
+end
+
+M.create_note = function()
+  -- TODO 
 end
 return M

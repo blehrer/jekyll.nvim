@@ -1,3 +1,6 @@
 vim.api.nvim_create_user_command("JekyllPost", function()
   require("jekyll").create_post()
 end, {})
+vim.api.nvim_create_user_command("JekyllNote", function()
+  require("jekyll").create_note()
+end, {})
