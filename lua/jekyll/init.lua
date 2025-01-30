@@ -15,13 +15,26 @@ local random_string = function (k)
   return string.char(table.unpack(pw, 1, k))
 end
 
-local create_buffer_with_name_and_content = function (path, content)
-  local buf = vim.api.nvim_create_buf(false, false)
-  vim.api.nvim_buf_set_option(buf, 'modifiable', true)
-  vim.api.nvim_buf_set_option(buf, "filetype", "markdown")
-  vim.api.nvim_set_current_buf(buf)
-  vim.api.nvim_buf_set_lines(buf, 0, -1, true, content)
-  vim.api.nvim_buf_set_name(buf, path)
+local create_buffer_with_name_and_content = function (path, content, override)
+  override = override or false 
+  local buf = nil
+  if not override and vim.fn.filereadable(path) == 1 then
+    vim.cmd.edit(path)
+    buf = vim.api.nvim_get_current_buf()
+    local last_line = vim.api.nvim_buf_line_count(buf)
+    vim.api.nvim_win_set_cursor(0, {last_line, 0})
+  else
+    buf = vim.api.nvim_create_buf(false, false)
+    vim.api.nvim_buf_set_name(buf, path)
+    vim.api.nvim_buf_set_option(buf, "filetype", "markdown")
+    vim.schedule(function()
+      vim.api.nvim_buf_set_option(buf, 'modifiable', true)
+      vim.api.nvim_set_current_buf(buf)
+      vim.api.nvim_buf_set_lines(buf, 0, -1, true, content)
+      local last_line = vim.api.nvim_buf_line_count(buf)
+      vim.api.nvim_win_set_cursor(0, {last_line, 0})
+    end)
+  end
   return buf
 end
 
@@ -40,27 +53,16 @@ M.create_post = function ()
     date,
     title:lower():gsub(" ", "-"):gsub("[^%w-]", ""))
   local path = vim.fn.expand(vim.uv.cwd() .. "/_posts/" .. filename)
-  local content = string.format([[
----
-layout: post
-title: "%s"
-date: %s %s
-categories: 
-tags: 
----
-
-]], title, date, time)
-
-  -- Write the file
-  local file = create_buffer_with_name_and_content(path, content)
-  if file then
-    -- Open the new file in the current buffer
-    vim.cmd("edit " .. path)
-    -- Move cursor to the categories line
-    vim.cmd("normal! GG$")
-  else
-    vim.notify("Failed to create post", vim.log.levels.ERROR)
-  end
+  local content = {
+    "---",
+    "layout: post",
+    string.format("title: '%s'", title),
+    string.format("date: %s %s", date, time),
+    "categories: ",
+    "tags: ",
+    "---",
+  }
+  create_buffer_with_name_and_content(path, content)
 end
 
 M.create_note = function()
