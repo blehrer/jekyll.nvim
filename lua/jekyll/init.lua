@@ -68,10 +68,10 @@ end
 M.create_note = function()
   local date = os.date("%Y-%m-%d")
   local time = os.date("%H:%M:%S")
-  local hash = random_string(5)
+  local slug = random_string(5)
   local filename = string.format("%s-%s.md",
     date,
-    hash
+    slug
   )
   local path = vim.fn.expand(vim.uv.cwd() .. "/_notes/" .. filename)
   local content = {"---", string.format("date: %sT%s", date, time), "---"}
