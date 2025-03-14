@@ -67,8 +67,11 @@ end
 
 local M = {}
 
-M.setup = function ()
-  -- pass
+M.setup = function()
+  for name, command in pairs(M.user_commands) do
+    vim.api.nvim_create_user_command(name, command, {})
+  end
+  vim.g.loaded_jekyll_nvim = true
 end
 
 M.create_post = function()
@@ -119,5 +122,19 @@ M.promote_draft = function()
   })
 end
 
-return M
+M.user_commands = {
+  JekyllDraft = function()
+    require('jekyll').create_draft()
+  end,
+  JekyllPost = function()
+    require('jekyll').create_post()
+  end,
+  JekyllPromote = function()
+    require('jekyll').promote_draft()
+  end,
+  JekyllNote = function()
+    require('jekyll').create_note()
+  end,
+}
 
+return M
