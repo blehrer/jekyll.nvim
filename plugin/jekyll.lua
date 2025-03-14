@@ -7,3 +7,5 @@ if not success then
   print(vim.inspect(result))
   return
 end
+
+vim.fn.chdir('.')
