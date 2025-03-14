@@ -71,6 +71,20 @@ M.setup = function(opts)
   for name, command in pairs(M.user_commands) do
     vim.api.nvim_create_user_command(name, command, {})
   end
+  vim.api.nvim_create_augroup(M.opts.augroup_name, M.opts.augroup_opts)
+  vim.api.nvim_create_autocmd('DirChanged', {
+    group = M.opts.augroup_name,
+    callback = function(_)
+      local jekyll = require 'jekyll'
+      if jekyll then
+        if M.is_jekyll_window() and not vim.g.loaded_jekyll_nvim then
+          jekyll.setup()
+        else
+          jekyll.deactivate()
+        end
+      end
+    end,
+  })
   vim.g.loaded_jekyll_nvim = true
 end
 
@@ -158,20 +172,5 @@ M.opts = {
   augroup_name = 'Jekyll',
   augroup_opts = { clear = true },
 }
-
-vim.api.nvim_create_augroup(M.opts.augroup_name, M.opts.augroup_opts)
-vim.api.nvim_create_autocmd('DirChanged', {
-  group = M.opts.augroup_name,
-  callback = function(_)
-    local jekyll = require 'jekyll'
-    if jekyll then
-      if M.is_jekyll_window() and not vim.g.loaded_jekyll_nvim then
-        jekyll.setup()
-      else
-        jekyll.deactivate()
-      end
-    end
-  end,
-})
 
 return M

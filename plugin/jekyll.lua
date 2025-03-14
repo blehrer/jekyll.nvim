@@ -8,4 +8,4 @@ if not success then
   return
 end
 
-vim.fn.chdir('.')
+vim.cmd('cd .')
