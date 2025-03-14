@@ -74,6 +74,15 @@ M.setup = function()
   vim.g.loaded_jekyll_nvim = true
 end
 
+M.disable = function()
+  for key, _ in pairs(M.user_commands) do
+    vim.api.nvim_del_user_command(key)
+  end
+  vim.g.loaded_jekyll_nvim = false
+end
+
+M.deactivate = M.disable
+
 M.create_post = function()
   local title = vim.fn.input('Title: ')
   create_post_or_draft(title, '_posts', true)
