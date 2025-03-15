@@ -1,3 +1,46 @@
+--[[ type declarations ]]
+
+---@class JekyllNvim
+---@field user_commands? table<string,function> commands that are registered that you can use from the : prompt
+---@field opts? JekyllNvimOptions pluggable values
+---@field setup? function(table<string,string>?) called to initialize the plugin
+---@field disable? function unregisters user commands, used by package manager to signify the plugin should be uninstalled
+---@field deactivate? function unregisters user commands
+---@field create_post? function
+---@field create_draft? function
+---@field create_note? function
+---@field promote_draft? function
+
+---@class JekyllNvimOptions
+---@field augroup_name string
+
+local jekyll_plugin = 'jekyll'
+---@type JekyllNvim
+local M = {}
+
+---@type JekyllNvimOptions
+M.opts = {
+  augroup_name = 'Jekyll',
+}
+
+---@type table<string,function>
+M.user_commands = {
+  JekyllDraft = function()
+    require(jekyll_plugin).create_draft()
+  end,
+  JekyllPost = function()
+    require(jekyll_plugin).create_post()
+  end,
+  JekyllPromote = function()
+    require(jekyll_plugin).promote_draft()
+  end,
+  JekyllNote = function()
+    require(jekyll_plugin).create_note()
+  end,
+}
+
+--[[ utilities ]]
+
 table.unpack = table.unpack or unpack -- 5.1 compatibility
 local Path = require('plenary.path')
 local telescope = require('telescope.builtin')
@@ -65,37 +108,82 @@ local create_post_or_draft = function(title, folder, date_and_time)
   create_buffer_with_name_and_content(path, content)
 end
 
-local M = {}
-
-M.setup = function(opts)
+local create_user_commands = function()
   for name, command in pairs(M.user_commands) do
     vim.api.nvim_create_user_command(name, command, {})
   end
-  vim.api.nvim_create_augroup(M.opts.augroup_name, M.opts.augroup_opts)
-  vim.api.nvim_create_autocmd('DirChanged', {
-    group = M.opts.augroup_name,
-    callback = function(_)
-      local jekyll = require 'jekyll'
-      if jekyll then
-        if M.is_jekyll_window() and not vim.g.loaded_jekyll_nvim then
-          jekyll.setup()
-        else
-          jekyll.deactivate()
-        end
-      end
-    end,
-  })
   vim.g.loaded_jekyll_nvim = true
 end
 
-M.disable = function()
+local del_user_commands = function()
+  local user_commands = vim.api.nvim_get_commands({ builtin = false })
   for key, _ in pairs(M.user_commands) do
-    vim.api.nvim_del_user_command(key)
+    if vim.fn.has_key(user_commands, key) then
+      vim.api.nvim_del_user_command(key)
+    end
   end
   vim.g.loaded_jekyll_nvim = false
 end
 
-M.deactivate = M.disable
+---@return boolean
+local is_jekyll_window = function()
+  local gemfile = Path:new(vim.uv.cwd(), 'Gemfile')
+  local gemfile_lines = Path.exists(gemfile) and Path.readlines(gemfile) or {}
+  return vim.tbl_contains(gemfile_lines, function(line)
+    return string.match(line, '.*jekyll.*')
+  end)
+end
+
+---@param opts JekyllNvimOptions
+---@return boolean
+local augroup_exists = function(opts)
+  return pcall(vim.cmd('au ' .. opts.augroup_name))
+end
+
+---@param opts JekyllNvimOptions
+---@return boolean
+local aucmds_exist = function(opts)
+  local success, rv = augroup_exists(opts)
+  if success then
+    return #rv > 0
+  end
+  return false
+end
+
+---@param opts JekyllNvimOptions
+local setup_augroup = function(opts)
+  if augroup_exists(opts) then
+    print('augroup ' .. opts.augroup_name .. ' already exists')
+    return
+  else
+    print('Creating augroup' .. opts.augroup_name)
+    vim.api.nvim_create_augroup(opts.augroup_name, {})
+  end
+end
+
+---@param opts JekyllNvimOptions
+local setup_autocmds = function(opts)
+  setup_augroup(opts)
+  if not aucmds_exist(opts) then
+    vim.api.nvim_create_autocmd('DirEntered', {
+      group = opts.augroup_name,
+      callback = function(_)
+        if is_jekyll_window() then
+          create_user_commands()
+        else
+          del_user_commands()
+        end
+      end,
+    })
+  end
+end
+
+---@param opts JekyllNvimOptions?
+M.setup = function(opts)
+  local merged_options = vim.tbl_extend('force', M.opts, opts)
+  create_user_commands()()
+  setup_autocmds(merged_options)
+end
 
 M.create_post = function()
   local title = vim.fn.input('Title: ')
@@ -144,33 +232,5 @@ M.promote_draft = function()
     end,
   })
 end
-
-M.user_commands = {
-  JekyllDraft = function()
-    require('jekyll').create_draft()
-  end,
-  JekyllPost = function()
-    require('jekyll').create_post()
-  end,
-  JekyllPromote = function()
-    require('jekyll').promote_draft()
-  end,
-  JekyllNote = function()
-    require('jekyll').create_note()
-  end,
-}
-
-M.is_jekyll_window = function()
-  local gemfile = Path:new(vim.uv.cwd(), 'Gemfile')
-  local gemfile_lines = Path.exists(gemfile) and Path.readlines(gemfile) or {}
-  return vim.tbl_contains(gemfile_lines, function(line)
-    return string.match(line, '.*jekyll.*')
-  end)
-end
-
-M.opts = {
-  augroup_name = 'Jekyll',
-  augroup_opts = { clear = true },
-}
 
 return M
