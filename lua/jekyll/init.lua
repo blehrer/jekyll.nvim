@@ -154,7 +154,7 @@ local create_post_or_draft = function (title, folder, date_and_time)
     local date_front_matter = string.format('date: %sT%s', date, time)
     table.insert(post_frontmatter, 3, date_front_matter)
   end
-  create_buffer_with_name_and_content(path, content)
+  return create_buffer_with_name_and_content(path, post_frontmatter)
 end
 
 ---@param opts? JekyllNvimOptions
