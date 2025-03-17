@@ -85,6 +85,11 @@ local setup_autocmds = function(opts)
   return vim.api.nvim_create_augroup(opts.augroup_name, { clear = false })
 end
 
+---@type JekyllNvimOptions
+M.opts = {
+  augroup_name = 'Jekyll',
+}
+
 table.unpack = table.unpack or unpack -- 5.1 compatibility
 local Path = require('plenary.path')
 local telescope = require('telescope.builtin')
@@ -150,9 +155,13 @@ local create_post_or_draft = function (title, folder, date_and_time)
   create_buffer_with_name_and_content(path, content)
 end
 
-
-M.setup = function ()
-  -- pass
+---@param opts? JekyllNvimOptions
+M.setup = function(opts)
+  local merged_options = vim.tbl_extend('force', M.opts, opts)
+  if is_jekyll_window() then
+    create_user_commands()
+  end
+  setup_autocmds(merged_options)
 end
 
 M.create_post = function ()
