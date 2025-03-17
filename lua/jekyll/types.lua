@@ -1,0 +1,8 @@
+------
+---@class JekyllNvim
+---@field setup function(table<string,any>?) called to initialize the plugin
+---@field create_post function creates a jekyll post in _posts
+---@field create_draft function creates a jekyll post in _drafts
+---@field create_note function creates a jekyll note in _notes
+---@field promote_draft function converts an existing draft into a published post
+------

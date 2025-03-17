@@ -1,3 +1,6 @@
+---@type JekyllNvim
+---@diagnostic disable-next-line: missing-fields
+local M = {}
 table.unpack = table.unpack or unpack -- 5.1 compatibility
 local Path = require('plenary.path')
 local telescope = require('telescope.builtin')
@@ -63,7 +66,6 @@ local create_post_or_draft = function (title, folder, date_and_time)
   create_buffer_with_name_and_content(path, content)
 end
 
-local M = {}
 
 M.setup = function ()
   -- pass
