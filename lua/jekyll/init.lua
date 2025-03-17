@@ -107,10 +107,8 @@ local random_string = function (k)
   return string.char(table.unpack(pw, 1, k))
 end
 
-local create_buffer_with_name_and_content = function (path, content, override)
-  override = override or false
+local create_buffer_with_name_and_content = function(path, content)
   local buf = nil
-  if not override and vim.fn.filereadable(path) == 1 then
     vim.cmd.edit(path)
     buf = vim.api.nvim_get_current_buf()
     local last_line = vim.api.nvim_buf_line_count(buf)
