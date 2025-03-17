@@ -66,14 +66,9 @@ local create_post_or_draft = function (title, folder, date_and_time)
   create_buffer_with_name_and_content(path, content)
 end
 
-
-M.setup = function ()
-  -- pass
-end
-
-M.create_post = function ()
-  local title = vim.fn.input("Title: ")
-  create_post_or_draft(title, "_posts", true)
+M.create_post = function()
+  local title = vim.fn.input('Title: ')
+  create_post_or_draft(title, '_posts', true)
 end
 
 M.create_draft = function ()
@@ -119,5 +114,99 @@ M.promote_draft = function()
   })
 end
 
-return M
+---module name
+local jekyll_plugin = "jekyll"
 
+---@type JekyllNvimOptions
+M.opts = {
+  augroup_name = 'Jekyll',
+}
+
+---@type JekyllUserCommands
+M.user_commands = {
+  JekyllDraft = function()
+    require(jekyll_plugin).create_draft()
+  end,
+  JekyllPost = function()
+    require(jekyll_plugin).create_post()
+  end,
+  JekyllPromote = function()
+    require(jekyll_plugin).promote_draft()
+  end,
+  JekyllNote = function()
+    require(jekyll_plugin).create_note()
+  end,
+}
+
+---Creates commands used to interact with this plugin from the : prompt
+local create_user_commands = function()
+  for name, command in pairs(M.user_commands) do
+    pcall(function()
+      vim.api.nvim_create_user_command(name, command, {})
+    end)
+  end
+  vim.g.loaded_jekyll_nvim = true
+end
+
+---Deletes commands used to interact with this plugin from the : prompt
+local del_user_commands = function()
+  local user_commands = vim.api.nvim_get_commands({ builtin = false })
+  for key, _ in pairs(M.user_commands) do
+    if vim.fn.has_key(user_commands, key) then
+      pcall(function()
+        vim.api.nvim_del_user_command(key)
+      end)
+    end
+  end
+  vim.g.loaded_jekyll_nvim = false
+end
+
+---Determines if the current window should allow the user to interact with this plugin
+---@see setup_autocmds
+---@return boolean
+local is_jekyll_window = function()
+  local gemfile = Path:new(vim.uv.cwd(), "Gemfile")
+  local gemfile_exists = Path.exists(gemfile)
+  local gemfile_lines = gemfile_exists and Path.readlines(gemfile) or {}
+  local gem_match = vim.tbl_contains(gemfile_lines, function(line)
+    return string.find(line, "jekyll")
+  end, { predicate = true })
+  return gem_match
+end
+
+---Autocommands for making/deleting user_commands on DirChanged event
+---@param opts JekyllNvimOptions
+---@return integer? augroup id number
+local setup_autocmds = function(opts)
+  local augroup_exists = function()
+    local _augroup_exists, _ = pcall(function()
+      vim.api.nvim_create_augroup(opts.augroup_name, { clear = false })
+    end)
+    return _augroup_exists
+  end
+  if not augroup_exists() then
+    vim.api.nvim_create_augroup(opts.augroup_name, {})
+  end
+  vim.api.nvim_create_autocmd("DirChanged", {
+    group = opts.augroup_name,
+    callback = function(_)
+      if is_jekyll_window() then
+        create_user_commands()
+      else
+        del_user_commands()
+      end
+    end,
+  })
+  return vim.api.nvim_create_augroup(opts.augroup_name, { clear = false })
+end
+
+---@param opts? JekyllNvimOptions
+M.setup = function(opts)
+  local merged_options = vim.tbl_extend('force', M.opts, opts or {})
+  if is_jekyll_window() then
+    create_user_commands()
+  end
+  setup_autocmds(merged_options)
+end
+
+return M

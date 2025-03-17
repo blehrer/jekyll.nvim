@@ -6,3 +6,12 @@
 ---@field create_note function creates a jekyll note in _notes
 ---@field promote_draft function converts an existing draft into a published post
 ------
+
+------
+---@alias JekyllUserCommands table<string,function>
+------
+
+------
+---@class JekyllNvimOptions
+---@field augroup_name string
+------
