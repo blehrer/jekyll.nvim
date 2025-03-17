@@ -109,6 +109,7 @@ end
 
 local create_buffer_with_name_and_content = function(path, content)
   local buf = nil
+  if vim.fn.filereadable(path) == 1 then
     vim.cmd.edit(path)
     buf = vim.api.nvim_get_current_buf()
     local last_line = vim.api.nvim_buf_line_count(buf)
