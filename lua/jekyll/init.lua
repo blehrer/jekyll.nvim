@@ -18,10 +18,9 @@ local random_string = function (k)
   return string.char(table.unpack(pw, 1, k))
 end
 
-local create_buffer_with_name_and_content = function (path, content, override)
-  override = override or false
+local create_buffer_with_name_and_content = function (path, content)
   local buf = nil
-  if not override and vim.fn.filereadable(path) == 1 then
+  if vim.fn.filereadable(path) == 1 then
     vim.cmd.edit(path)
     buf = vim.api.nvim_get_current_buf()
     local last_line = vim.api.nvim_buf_line_count(buf)
@@ -63,7 +62,7 @@ local create_post_or_draft = function (title, folder, date_and_time)
     local date_front_matter = string.format("date: %sT%s", date, time)
     table.insert(content, 3, date_front_matter)
   end
-  create_buffer_with_name_and_content(path, content)
+  return create_buffer_with_name_and_content(path, content)
 end
 
 M.create_post = function()
@@ -83,7 +82,7 @@ M.create_note = function()
   local filename = string.format("%s-%s.md", date, slug)
   local path = vim.fn.expand(vim.uv.cwd() .. "/_notes/" .. filename)
   local content = {"---", string.format("date: %sT%s", date, time), "---"}
-  create_buffer_with_name_and_content(path, content)
+  return create_buffer_with_name_and_content(path, content)
 end
 
 M.promote_draft = function()
