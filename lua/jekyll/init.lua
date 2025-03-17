@@ -21,6 +21,70 @@ M.user_commands = {
   end,
 }
 
+---Creates commands used to interact with this plugin from the : prompt
+local create_user_commands = function()
+  for name, command in pairs(M.user_commands) do
+    pcall(function()
+      vim.api.nvim_create_user_command(name, command, {})
+    end)
+  end
+  vim.g.loaded_jekyll_nvim = true
+end
+
+---Deletes commands used to interact with this plugin from the : prompt
+local del_user_commands = function()
+  local user_commands = vim.api.nvim_get_commands({ builtin = false })
+  for key, _ in pairs(M.user_commands) do
+    if vim.fn.has_key(user_commands, key) then
+      pcall(function()
+        vim.api.nvim_del_user_command(key)
+      end)
+    end
+  end
+  vim.g.loaded_jekyll_nvim = false
+end
+
+---Determines if the current window should allow the user to interact with this plugin
+---@see setup_autocmds
+---@return boolean
+local is_jekyll_window = function()
+  local gemfile = Path:new(vim.uv.cwd(), 'Gemfile')
+  local gemfile_exists = Path.exists(gemfile)
+  local gemfile_lines = gemfile_exists and Path.readlines(gemfile) or {}
+  local gem_match = vim.tbl_contains(gemfile_lines, function(line)
+    return string.find(line, 'jekyll')
+  end, { predicate = true })
+  return gem_match
+end
+
+---Autocommands for making/deleting user_commands on DirChanged event
+---@param opts JekyllNvimOptions
+---@return integer? augroup id number
+local setup_autocmds = function(opts)
+  local augroup_exists = function()
+    local _augroup_exists, _ = pcall(function()
+      vim.api.nvim_create_augroup(opts.augroup_name, { clear = false })
+    end)
+    return _augroup_exists
+  end
+  if augroup_exists() then
+    return
+  else
+    vim.api.nvim_create_augroup(opts.augroup_name, {})
+  end
+  vim.api.nvim_create_autocmd('DirChanged', {
+    group = opts.augroup_name,
+    callback = function(_)
+      if is_jekyll_window() then
+        create_user_commands()
+      else
+        del_user_commands()
+      end
+    end,
+  })
+  return vim.api.nvim_create_augroup(opts.augroup_name, { clear = false })
+end
+
 table.unpack = table.unpack or unpack -- 5.1 compatibility
 local Path = require('plenary.path')
 local telescope = require('telescope.builtin')
