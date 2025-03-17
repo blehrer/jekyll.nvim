@@ -1,6 +1,25 @@
+---module name
+local jekyll_plugin = 'jekyll'
+
 ---@type JekyllNvim
 ---@diagnostic disable-next-line: missing-fields
 local M = {}
+
+---@type JekyllUserCommands
+M.user_commands = {
+  JekyllDraft = function()
+    require(jekyll_plugin).create_draft()
+  end,
+  JekyllPost = function()
+    require(jekyll_plugin).create_post()
+  end,
+  JekyllPromote = function()
+    require(jekyll_plugin).promote_draft()
+  end,
+  JekyllNote = function()
+    require(jekyll_plugin).create_note()
+  end,
+}
 
 table.unpack = table.unpack or unpack -- 5.1 compatibility
 local Path = require('plenary.path')
