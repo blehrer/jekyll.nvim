@@ -13,5 +13,6 @@
 
 ------
 ---@class JekyllNvimOptions
----@field augroup_name string
+---@field augroup_name string is
 ------
+

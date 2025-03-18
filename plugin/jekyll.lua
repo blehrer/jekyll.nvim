@@ -7,3 +7,4 @@ if not success then
   print(vim.inspect(result))
   return
 end
+
