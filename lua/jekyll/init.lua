@@ -1,6 +1,9 @@
----@type JekyllNvim
----@diagnostic disable-next-line: missing-fields
+---module name (dirname of this file)
+local jekyll_plugin = 'jekyll'
+
+---@class JekyllNvim
 local M = {}
+
 table.unpack = table.unpack or unpack -- 5.1 compatibility
 local Path = require('plenary.path')
 local telescope = require('telescope.builtin')
@@ -26,7 +29,7 @@ end
 ---@return integer the buffer number
 local create_buffer_with_name_and_content = function(path, content)
   local buf = nil
-  if not override and vim.fn.filereadable(path) == 1 then
+  if vim.fn.filereadable(path) == 1 then
     vim.cmd.edit(path)
     buf = vim.api.nvim_get_current_buf()
     local last_line = vim.api.nvim_buf_line_count(buf)
@@ -125,9 +128,6 @@ M.promote_draft = function()
     end,
   })
 end
-
----module name
-local jekyll_plugin = 'jekyll'
 
 ---@type JekyllNvimOptions
 M.opts = {
