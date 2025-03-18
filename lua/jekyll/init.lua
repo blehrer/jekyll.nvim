@@ -5,9 +5,11 @@ table.unpack = table.unpack or unpack -- 5.1 compatibility
 local Path = require('plenary.path')
 local telescope = require('telescope.builtin')
 
+---Function returning a random alphanumeric string of length
+---@param k integer
+---@return string
+---@see https://stackoverflow.com/questions/72523578
 local random_string = function (k)
-  --[[ function returning a random alphanumeric string of length k --]]
-  -- https://stackoverflow.com/questions/72523578/is-there-a-way-to-generate-an-alphanumeric-string-in-lua
   math.randomseed(os.time())
   local alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
   local n = string.len(alphabet)
@@ -18,8 +20,11 @@ local random_string = function (k)
   return string.char(table.unpack(pw, 1, k))
 end
 
-local create_buffer_with_name_and_content = function (path, content, override)
-  override = override or false
+---Main point of entry into creating documents that Jekyll understands
+---@param path string
+---@param content string[]
+---@return integer the buffer number
+local create_buffer_with_name_and_content = function (path, content)
   local buf = nil
   if not override and vim.fn.filereadable(path) == 1 then
     vim.cmd.edit(path)
@@ -41,6 +46,11 @@ local create_buffer_with_name_and_content = function (path, content, override)
   return buf
 end
 
+---Creates a new document with appropriate frontmatter in either _drafts or _posts
+---@param title string primary name of the new document (converted to lower-snake-case)
+---@param folder string parent folder of the new document
+---@param date_and_time boolean whether a date and time are to be use in the filename
+---@return integer? buffer id number
 local create_post_or_draft = function (title, folder, date_and_time)
   if title == "" then return end
   local title_slug = title:lower():gsub(" ", "-"):gsub("[^%w-]", "")
