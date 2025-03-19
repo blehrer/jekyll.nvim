@@ -1,12 +1,11 @@
-vim.api.nvim_create_user_command("JekyllDraft", function()
-  require("jekyll").create_draft()
-end, {})
-vim.api.nvim_create_user_command("JekyllPost", function()
-  require("jekyll").create_post()
-end, {})
-vim.api.nvim_create_user_command("JekyllPromote", function()
-  require("jekyll").promote_draft()
-end, {})
-vim.api.nvim_create_user_command("JekyllNote", function()
-  require("jekyll").create_note()
-end, {})
+if vim.g.loaded_jekyll_nvim then
+  return
+end
+
+local success, result = pcall(require('jekyll').setup)
+if not success then
+  print(vim.inspect(result))
+  return
+end
+
+-- vim: ts=2 sts=2 sw=2 et tw=100
