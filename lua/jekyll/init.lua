@@ -186,7 +186,6 @@ local is_jekyll_window = function()
   return gem_match
 end
 
----Autocommands for making/deleting user_commands on DirChanged event
 ---@param opts JekyllNvimOptions
 ---@return integer? augroup id number
 local setup_autocmds = function(opts)
@@ -199,6 +198,14 @@ local setup_autocmds = function(opts)
   if not augroup_exists() then
     vim.api.nvim_create_augroup(opts.augroup_name, {})
   end
+  autocmd_create_del_user_commands(opts)
+  autocmd_markup_files_use_liquid_ft(opts)
+  return vim.api.nvim_create_augroup(opts.augroup_name, { clear = false })
+end
+
+---Autocommands for making/deleting user_commands on DirChanged event
+---@param opts JekyllNvimOptions
+local autocmd_create_del_user_commands = function(opts)
   vim.api.nvim_create_autocmd('DirChanged', {
     desc = 'Decide whether cwd needs Jekyll user_commands',
     group = opts.augroup_name,
@@ -210,7 +217,22 @@ local setup_autocmds = function(opts)
       end
     end,
   })
-  return vim.api.nvim_create_augroup(opts.augroup_name, { clear = false })
+end
+
+---Autocommands for explicitly using the `liquid` filetype so as to get the benefits of snippets, etc...
+---@param opts JekyllNvimOptions
+local autocmd_markup_files_use_liquid_ft = function(opts)
+  vim.api.nvim_create_autocmd('BufReadPost', {
+    desc = 'Change filetype of html/markdown to liquid',
+    group = opts.augroup_name,
+    callback = function(_)
+      if is_jekyll_window() then
+        if vim.bo.filetype == 'markdown' or vim.bo.filetype == 'html' then
+          vim.bo.filetype = 'liquid'
+        end
+      end
+    end,
+  })
 end
 
 ---@param opts? JekyllNvimOptions
