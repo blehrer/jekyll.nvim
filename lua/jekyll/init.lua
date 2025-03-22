@@ -189,10 +189,11 @@ end
 ---@param opts JekyllNvimOptions
 ---@return integer? augroup id number
 local setup_autocmds = function(opts)
-  -- Create augroup, or retrieve existing one
+  ---Create augroup, or retrieve existing one
   local augroup = vim.api.nvim_create_augroup(opts.augroup_name, { clear = false })
 
   ---Autocommand for making/deleting user_commands on DirChanged event
+  ---@param _opts JekyllNvimOptions
   local autocmd_create_del_user_commands = function(_opts)
     vim.api.nvim_create_autocmd('DirChanged', {
       desc = 'Decide whether cwd needs Jekyll user_commands',
