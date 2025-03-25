@@ -37,7 +37,7 @@ local create_buffer_with_name_and_content = function(path, content)
   else
     buf = vim.api.nvim_create_buf(false, false)
     vim.api.nvim_buf_set_name(buf, path)
-    vim.api.nvim_set_option_value('filetype', 'markdown', { buf = buf })
+    vim.api.nvim_set_option_value('filetype', 'liquid', { buf = buf })
     vim.schedule(function()
       vim.api.nvim_set_option_value('modifiable', true, { buf = buf })
       vim.api.nvim_set_current_buf(buf)
@@ -186,6 +186,11 @@ local is_jekyll_window = function()
   return gem_match
 end
 
+---Determines if the current buffer is on the cdpath of a jekyll window
+local is_jekyll_buffer = function()
+  return is_jekyll_window() and vim.fn.findfile(vim.fn.expand('%'), vim.o.cdpath)
+end
+
 ---@param opts JekyllNvimOptions
 ---@return integer? augroup id number
 local setup_autocmds = function(opts)
@@ -211,11 +216,11 @@ local setup_autocmds = function(opts)
   ---Autocommand for explicitly using the `liquid` filetype so as to get the benefits of snippets, etc...
   ---@param _opts JekyllNvimOptions
   local autocmd_markup_files_use_liquid_ft = function(_opts)
-    vim.api.nvim_create_autocmd('BufReadPost', {
+    vim.api.nvim_create_autocmd('BufEnter', {
       desc = 'Change filetype of html/markdown to liquid',
       group = _opts.augroup_name,
       callback = function(_)
-        if is_jekyll_window() then
+        if is_jekyll_buffer() then
           if vim.bo.filetype == 'markdown' or vim.bo.filetype == 'html' then
             vim.bo.filetype = 'liquid'
           end
