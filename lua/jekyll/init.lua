@@ -23,7 +23,7 @@ local random_string = function(k)
   return string.char(table.unpack(pw, 1, k))
 end
 
-local modeline = { '', '<!--', 'vim:set filetype=liquid', '-->' }
+local modeline = { '', '<!-- vim: set ft=liquid -->' }
 
 ---Main point of entry into creating documents that Jekyll understands
 ---@param path string
