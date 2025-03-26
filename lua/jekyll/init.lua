@@ -23,6 +23,8 @@ local random_string = function(k)
   return string.char(table.unpack(pw, 1, k))
 end
 
+local modeline = { '', '<!--', 'vim:set filetype=liquid', '-->' }
+
 ---Main point of entry into creating documents that Jekyll understands
 ---@param path string
 ---@param content string[]
@@ -42,7 +44,8 @@ local create_buffer_with_name_and_content = function(path, content)
       vim.api.nvim_set_option_value('modifiable', true, { buf = buf })
       vim.api.nvim_set_current_buf(buf)
       vim.api.nvim_buf_set_lines(buf, 0, -1, true, content)
-      local last_line = vim.api.nvim_buf_line_count(buf)
+      vim.api.nvim_buf_set_lines(buf, -1, -1, true, modeline)
+      local last_line = vim.api.nvim_buf_line_count(buf) - #modeline
       vim.api.nvim_win_set_cursor(0, { last_line, 0 })
     end)
   end
@@ -236,6 +239,7 @@ end
 
 ---@param opts? JekyllNvimOptions
 M.setup = function(opts)
+  ---@type JekyllNvimOptions
   local merged_options = vim.tbl_extend('force', M.opts, opts or {})
   if is_jekyll_window() then
     create_user_commands()
